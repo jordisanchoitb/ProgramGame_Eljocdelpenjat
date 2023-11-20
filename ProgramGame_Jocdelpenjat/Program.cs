@@ -6,6 +6,8 @@
  *
  */
 
+using System.Diagnostics.Tracing;
+
 namespace GameProject
 {
     public class SanchoJordiCode
@@ -29,15 +31,19 @@ namespace GameProject
             const string MSGGameOver = "S'ha acabat el joc!";
             const string MSGTheWordIs = "La paraula era:";
             const string MSGGetText = "Introdueix un text qualsevol:";
+            const string MSGErrorGetText = "Text molt curt (ha de tindre com a minim 10 paraules) o paraules molt curtes, torna a introduir un text:";
             const string MSGWinGame = "Felicitats! Has guanyat!";
+            const string MSGErrorInputLvl = "No has seleccionat un nivell torna a intentarlo, las lletras que tens que escollir son de la (A-D)";
             const int leveleasy = 7;
             const int levelnormal = 5;
             const int levelhard = 4;
             const int levelexpert = 3;
-            int numtrysuser = 0, lenghtsecretword=0, numcountcorrect=0;
-            bool gameover = false;
+            const int maxwordsintext = 10;
+            const int letterswords = 2;
+            int numtrysuser = 0, lenghtsecretword=0, numcountcorrect=0, lenghwordarray=0;
+            bool gameover = false, errorinputuserlvl= false, errorgettext=false;
             string inputlvluser, inputletter, usertext;
-            string secretword, secretwordoutAccents="", secretarrayword;
+            string secretword="", secretwordoutAccents="", secretarrayword;
 
             string[,] picturehangman = {{"+","=","=","=","=","=","=","=","+"," "," "," "},
                                         {"|"," "," "," "," "," "," "," "," "," "," "," "},
@@ -56,64 +62,95 @@ namespace GameProject
             Console.WriteLine(MSGWelcome);
             Console.WriteLine(MSGDownWelcome);
             Console.ResetColor();
-            Console.WriteLine();
-            Console.WriteLine(MSGChooseDif);
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine(MSGEasyOpt);
-            Console.WriteLine(MSGNormalOpt);
-            Console.WriteLine(MSGHardOpt);
-            Console.WriteLine(MSGExpertOpt);
-            Console.ResetColor();
-            inputlvluser = Console.ReadLine();
-            switch (inputlvluser.ToUpper())
+            do
             {
-                case "A":
-                    Console.WriteLine($"{MSGGetChoose} facil!");
-                    numtrysuser = leveleasy;
-                    lenghtsecretword = 8;
-                    break;
-                case "B":
-                    Console.WriteLine($"{MSGGetChoose} normal!");
-                    numtrysuser = levelnormal;
-                    lenghtsecretword = 10;
-                    break;
-                case "C":
-                    Console.WriteLine($"{MSGGetChoose} dificil!");
-                    numtrysuser = levelhard;
-                    lenghtsecretword = 10;
-                    break;
-                case "D":
-                    Console.WriteLine($"{MSGGetChoose} expert!");
-                    numtrysuser = levelexpert;
-                    lenghtsecretword = 12;
-                    break;
-            }
+                if (errorinputuserlvl)
+                {
+                    Console.Clear();
+                    Console.BackgroundColor = ConsoleColor.Red;
+                    Console.WriteLine(MSGErrorInputLvl);
+                    Console.ResetColor();
+                }
+                Console.WriteLine();
+                Console.WriteLine(MSGChooseDif);
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine(MSGEasyOpt);
+                Console.WriteLine(MSGNormalOpt);
+                Console.WriteLine(MSGHardOpt);
+                Console.WriteLine(MSGExpertOpt);
+                Console.ResetColor();
+                inputlvluser = Console.ReadLine();
+
+                switch (inputlvluser.ToUpper())
+                {
+                    case "A":
+                        Console.WriteLine();
+                        Console.WriteLine($"{MSGGetChoose} facil!");
+                        numtrysuser = leveleasy;
+                        lenghtsecretword = 8;
+                        break;
+                    case "B":
+                        Console.WriteLine();
+                        Console.WriteLine($"{MSGGetChoose} normal!");
+                        numtrysuser = levelnormal;
+                        lenghtsecretword = 10;
+                        break;
+                    case "C":
+                        Console.WriteLine();
+                        Console.WriteLine($"{MSGGetChoose} dificil!");
+                        numtrysuser = levelhard;
+                        lenghtsecretword = 10;
+                        break;
+                    case "D":
+                        Console.WriteLine();
+                        Console.WriteLine($"{MSGGetChoose} expert!");
+                        numtrysuser = levelexpert;
+                        lenghtsecretword = 12;
+                        break;
+                }
+                errorinputuserlvl = true;
+            } while (!(inputlvluser.ToUpper() == "A" || inputlvluser.ToUpper() == "B" || inputlvluser.ToUpper() == "C" || inputlvluser.ToUpper() == "D"));
             Console.WriteLine(MSGClickForContinue);
             Console.ReadKey();
             Console.Clear();
 
-            /* Apartat agafar text de l'usuari i agafar la paraula oculta */
             char[] delimiter = { ' ', ',', '.', ':', '\f', '"', '\''};
-            Console.WriteLine(MSGGetText);
-            usertext = Console.ReadLine();
-            bool foundword = false;
-            string[] words = usertext.Split(delimiter);
-            secretword = "";
             do
             {
-                int numword = 0;
-                while (numword < words.Length && !(foundword))
+                if (errorgettext)
                 {
-                    if (words[numword].Length == lenghtsecretword)
-                    {
-                        secretword = words[numword];
-                        foundword = true;
-                    }
-                    numword++;
+                    Console.Clear();
+                    Console.WriteLine(MSGErrorGetText);
+                } else
+                {
+                    Console.WriteLine(MSGGetText);
                 }
-                lenghtsecretword--;
-            } while (secretword == "" && lenghtsecretword != 0);
+                usertext = Console.ReadLine();
+                string[] words = usertext.Split(delimiter);
+                lenghwordarray = words.Length;
+                if (lenghwordarray >= 10) 
+                { 
+                    bool foundword = false;
+                    secretword = "";
+                    /* Recorra l'array amb totes les paraules del text i agafar la paraula oculta */
+                    do
+                    {
+                        int numword = 0;
+                        while (numword < words.Length && !(foundword))
+                        {
+                            if (words[numword].Length == lenghtsecretword)
+                            {
+                                secretword = words[numword];
+                                foundword = true;
+                            }
+                            numword++;
+                        }
+                        lenghtsecretword--;
+                    } while (secretword == "" && lenghtsecretword != letterswords);
+                }               
+                errorgettext = true;
+            } while (!(lenghwordarray >= maxwordsintext && lenghtsecretword != letterswords));                
 
             /* Creo l'array on tindra las barras baixes dins del joc */
             char[] arraysecretword = new char[secretword.Length];
@@ -179,10 +216,12 @@ namespace GameProject
                 }
                 Console.WriteLine();
                 // printar barras bajas de la palabra escogida
+                Console.ForegroundColor = ConsoleColor.Green;
                 for (int l = 0; l < arraysecretword.Length; l++) 
                 {
                     Console.Write($"{arraysecretword[l]} ");
                 }
+                Console.ResetColor();
                 Console.WriteLine();
                 Console.WriteLine();
                 // Dibuija cuadrat del ahoracado i depenent del nivell de dificultat d'una forma o d'una altre
@@ -342,6 +381,7 @@ namespace GameProject
                     Console.WriteLine($"{MSGTheWordIs}{secretwordoutAccents}");
                     Console.WriteLine(MSGClickForContinue);
                     Console.ReadKey();
+                    gameover = true;
                 }
                 Console.Clear();
             }
